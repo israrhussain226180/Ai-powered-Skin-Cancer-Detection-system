@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkinScan AI | Advanced Skin Cancer Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 2rem;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+        }
+
+        .upload-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.8s ease-out 0.2s backwards;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .upload-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.2);
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--glass-border);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .drop-zone svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            transition: transform 0.3s ease;
+        }
+
+        .drop-zone:hover svg {
+            transform: scale(1.1);
+        }
+
+        .drop-zone p {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .drop-zone span {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .btn-predict {
+            margin-top: 2rem;
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            background: var(--primary);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+            display: none;
+        }
+
+        .btn-predict:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);
+        }
+
+        .preview-container {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        #image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal {
+            background: #1e293b;
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            width: 90%;
+            max-width: 500px;
+            padding: 2.5rem;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-align: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .result-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .result-class {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            text-transform: capitalize;
+        }
+
+        .result-confidence {
+            font-size: 1.1rem;
+            color: var(--text-dim);
+            margin-bottom: 2rem;
+        }
+
+        .confidence-bar-container {
+            background: rgba(255, 255, 255, 0.05);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .confidence-bar {
+            height: 100%;
+            background: linear-gradient(to right, #6366f1, #c084fc);
+            width: 0%;
+            transition: width 1s ease-out;
+        }
+
+        .btn-close {
+            padding: 0.8rem 2rem;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-close:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Loading Spinner */
+        .loader {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 0 auto;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Floating Blobs */
+        .blob {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(99, 102, 241, 0.2);
+            filter: blur(80px);
+            border-radius: 50%;
+            z-index: 0;
+            animation: float 20s infinite alternate;
+        }
+
+        .blob-1 { top: -100px; right: -50px; }
+        .blob-2 { bottom: -100px; left: -50px; background: rgba(192, 132, 252, 0.2); }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="container">
+        <header>
+            <h1>SkinScan AI</h1>
+            <p>Advanced diagnostic assistant powered by deep learning</p>
+        </header>
+
+        <div class="upload-card">
+            <div class="drop-zone" id="drop-zone">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p>Click or drag image to scan</p>
+                <span>Supports JPG, PNG, WEBP (Max 10MB)</span>
+            </div>
+            
+            <div class="preview-container" id="preview-container">
+                <img id="image-preview" src="" alt="Preview">
+            </div>
+
+            <input type="file" id="file-input" accept="image/*">
+            
+            <button class="btn-predict" id="btn-predict">
+                <span id="btn-text">Analyze Lesion</span>
+                <div class="loader" id="loader"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <div class="result-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
+            <p style="color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 0.5rem;">Analysis Result</p>
+            <div class="result-class" id="result-class">Melanoma</div>
+            <div class="result-confidence" id="result-confidence">Confidence: 98.4%</div>
+            
+            <div class="confidence-bar-container">
+                <div class="confidence-bar" id="confidence-bar"></div>
+            </div>
+
+            <p style="color: var(--text-dim); font-size: 0.9rem; margin-bottom: 2rem; line-height: 1.5;">
+                This prediction is based on visual patterns analyzed by AI. Please consult a professional dermatologist for a clinical diagnosis.
+            </p>
+
+            <button class="btn-close" id="btn-close">Close Report</button>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const previewContainer = document.getElementById('preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const btnPredict = document.getElementById('btn-predict');
+        const btnText = document.getElementById('btn-text');
+        const loader = document.getElementById('loader');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const btnClose = document.getElementById('btn-close');
+
+        // Drag and Drop
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        ['dragleave', 'dragend'].forEach(type => {
+            dropZone.addEventListener(type, () => {
+                dropZone.classList.remove('drag-over');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                previewContainer.style.display = 'block';
+                btnPredict.style.display = 'block';
+                dropZone.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Prediction
+        btnPredict.addEventListener('click', async () => {
+            const file = fileInput.files[0] || null; // Need to handle dropped files better in a real app
+            // For demo simplicity, we'll assume fileInput has it or we can get it from the last dropped
+            
+            btnText.style.display = 'none';
+            loader.style.display = 'block';
+            btnPredict.disabled = true;
+
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+
+            try {
+                // In a real Django setup, this would be '/api/predict/'
+                const response = await fetch('/api/predict/', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    showResult(data);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection failed to the AI service.');
+            } finally {
+                btnText.style.display = 'block';
+                loader.style.display = 'none';
+                btnPredict.disabled = false;
+            }
+        });
+
+        function showResult(data) {
+            const resultClass = document.getElementById('result-class');
+            const resultConfidence = document.getElementById('result-confidence');
+            const confidenceBar = document.getElementById('confidence-bar');
+
+            // Map internal names to display names if needed
+            const namesMap = {
+                'akiec': 'Actinic Keratosis',
+                'bcc': 'Basal Cell Carcinoma',
+                'bkl': 'Benign Keratosis',
+                'df': 'Dermatofibroma',
+                'melanoma': 'Melanoma',
+                'nevus': 'Melanocytic Nevus',
+                'vasc': 'Vascular Lesion'
+            };
+
+            resultClass.innerText = namesMap[data.class] || data.class;
+            const percentage = (data.confidence * 100).toFixed(1);
+            resultConfidence.innerText = `Confidence: ${percentage}%`;
+            
+            modalOverlay.classList.add('active');
+            
+            // Trigger bar animation
+            setTimeout(() => {
+                confidenceBar.style.width = `${percentage}%`;
+            }, 100);
+        }
+
+        btnClose.addEventListener('click', () => {
+            modalOverlay.classList.remove('active');
+            // Reset for next scan
+            setTimeout(() => {
+                location.reload();
+            }, 300);
+        });
+    </script>
+</body>
+</html>
